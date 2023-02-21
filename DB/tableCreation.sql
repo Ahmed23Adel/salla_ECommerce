@@ -1,20 +1,20 @@
-DROP DATABASE IF EXISTS Shoopy;
-CREATE DATABASE Shoopy;
-use Shoopy;
+DROP DATABASE IF EXISTS salla;
+CREATE DATABASE salla;
+use salla;
 
 -- User Seller/Normal
-CREATE TABLE User(
+CREATE TABLE NrmlSeller(
     UserID varchar(32),
-    FirstName varchar(32) NOT NULL,
-    LastName varchar(32) NOT NULL,
-    SignUpMethod TINYINT(1) NOT NULL, -- 0: Email and password, 1: Facebook, 2: Gmail
+    -- SignUpMethod TINYINT(1) NOT NULL, -- 0: Email and password, 1: Facebook, 2: Gmail
     UserType TINYINT(1) NOT NULL, -- 0: Normal 1: Seller, 2: Seller still not accepted yer
     SignUpDateTime DATETIME DEFAULT CURRENT_TIMESTAMP,
     MobileAuthenticationEnabled BOOLEAN NOT NULL,
     EmailAuthenticationEnabled BOOLEAN NOT NULL, -- You should first check for Mobile and then check for email.
     MobilePhone varchar(20),
+    ProfilePicLink varchar(128) DEFAULT NULL,
+    BirthDate DATE NOT NULL,
     CONSTRAINT PK_User PRIMARY KEY (UserID),
-    CONSTRAINT CHK_SignUP CHECK (SignUpMethod=0 OR SignUpMethod=1 OR SignUpMethod=2), 
+    -- CONSTRAINT CHK_SignUP CHECK (SignUpMethod=0 OR SignUpMethod=1 OR SignUpMethod=2), 
     CONSTRAINT CHK_UserType CHECK (UserType=0 OR UserType=1 OR UserType=2) -- For emailPass, they must use transaction,
     
 
@@ -25,7 +25,7 @@ CREATE TABLE SellersDocs(
     DocName varchar(32) NOT NULL, 
     DocLink varchar(64) NOT NULL,
     DateAdded DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserID) REFERENCES User(UserID)
+    FOREIGN KEY (UserID) REFERENCES NrmlSeller(UserID)
 
 );
 
@@ -39,18 +39,18 @@ CREATE TABLE BuyInformation(
     MobilePhone2 varchar(20) NOT NULL,
     ExtraInfo varchar(256),
     ExtraInfoFromEmp varchar(512),
-    FOREIGN KEY (UserID) REFERENCES User(UserID)
+    FOREIGN KEY (UserID) REFERENCES NrmlSeller(UserID)
 );
 
-CREATE TABLE UserSignUpEmailPass(
-    UserID varchar(32) NOT NULL,
-    UserEmail varchar(32) NOT NULL,
-    UserPassword varchar(32) NOT NULL,
-    ProfilePicLink varchar(128) DEFAULT NULL,
-    BirthDate DATETIME NOT NULL,
-    FOREIGN KEY (UserID) REFERENCES User(UserID),
-    CONSTRAINT PK_USER PRIMARY KEY(UserID)  
-);
+-- CREATE TABLE UserSignUpEmailPass(
+--    UserID varchar(32) NOT NULL,
+--    UserEmail varchar(32) NOT NULL,
+--    UserPassword varchar(32) NOT NULL,
+--    ProfilePicLink varchar(128) DEFAULT NULL,
+--    BirthDate DATETIME NOT NULL,
+--    FOREIGN KEY (UserID) REFERENCES User(UserID),
+--    CONSTRAINT PK_USER PRIMARY KEY(UserID)  
+-- );
 
 
 
@@ -127,7 +127,7 @@ CREATE TABLE Item(
     ItemQuantatiy SMALLINT,
     CONSTRAINT PK_Item PRIMARY KEY (ItemID),
     FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID),
-    FOREIGN KEY (SellerID) REFERENCES User(UserID),
+    FOREIGN KEY (SellerID) REFERENCES NrmlSeller(UserID),
     CONSTRAINT CHK_Qty CHECK(ItemQuantatiy>=0),
     CONSTRAINT CHK_MaxBuy CHECK(ItemMaxBuy>=0)
 );
@@ -213,7 +213,7 @@ CREATE TABLE Rate(
     Header varchar(64),
     Text varchar(256),
     DateCreation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserID) REFERENCES User(UserID),
+    FOREIGN KEY (UserID) REFERENCES NrmlSeller(UserID),
     FOREIGN KEY (ItemID) REFERENCES Item(ItemID)
 );
 
@@ -223,7 +223,7 @@ CREATE TABLE Cart(
     DateAdded DATETIME NOT NULL,
     Quantity TINYINT(1) NOT NULL DEFAULT 1, 
     CONSTRAINT PK_crt PRIMARY KEY (UserID, ItemID),
-    FOREIGN KEY (UserID) REFERENCES User(UserID),
+    FOREIGN KEY (UserID) REFERENCES NrmlSeller(UserID),
     FOREIGN KEY (ItemID) REFERENCES Item(ItemID)
 );
 -- When seller makes coupon, it applies only for his items
@@ -237,7 +237,7 @@ CREATE TABLE Coupon(
     CouponMaxDiscount DECIMAL(5, 2),
     IsForAll Binary,
     CONSTRAINT PK_cpn PRIMARY KEY (CouponID),
-    FOREIGN KEY (SellerID) REFERENCES User(UserID),
+    FOREIGN KEY (SellerID) REFERENCES NrmlSeller(UserID),
     CONSTRAINT CHK_DteCrtion CHECK(DateExpire > DateCreation),
     -- CONSTRAINT CHK_CpnTxt CHECK(len(CouponTxt)> 5),
     CONSTRAINT CHK_CpnDiscnt CHECK(CouponDiscount > 0),
@@ -260,7 +260,7 @@ CREATE TABLE BuyPackage(
     NrmlUserID varchar(32),
     DateBuy DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT PK_pck PRIMARY KEY (PackageID),
-    FOREIGN key (NrmlUserID) REFERENCES User(UserID)
+    FOREIGN key (NrmlUserID) REFERENCES NrmlSeller(UserID)
 );
 
 
@@ -289,8 +289,8 @@ CREATE TABLE PackageItemPhase(
 
 CREATE TABLE  Employee (
         EmpID varchar(32) NOT NULL,
-        FName varchar(32) NOT NULL,
-        LName varchar(32) NOT NULL, 
+        -- FName varchar(32) NOT NULL,
+        -- LName varchar(32) NOT NULL, 
         RestOfName varchar(64), 
         Bdate DATE NOT NULL, 
         MobilePhone varchar(15) NOT NULL, 
@@ -403,7 +403,7 @@ CREATE TABLE Thread(
     IsFinished BOOLEAN DEFAULT 0,
     Rate TINYINT(1),
     CONSTRAINT PK_Thread PRIMARY KEY (ThreadID),
-    FOREIGN KEY (NrmlOpenerID) REFERENCES User(UserID)
+    FOREIGN KEY (NrmlOpenerID) REFERENCES NrmlSeller(UserID)
 );
 
 CREATE TABLE ThreadMsg(
@@ -415,7 +415,7 @@ CREATE TABLE ThreadMsg(
     EmployeID varchar(32), -- if null then senderrr is user
     IsSeen Binary, -- For answered or not, you can deduce it by seeing if the last msg is from employee
     FOREIGN KEY (ThreadID) REFERENCES Thread(ThreadID),
-    FOREIGN KEY (UserID) REFERENCES User(UserID),
+    FOREIGN KEY (UserID) REFERENCES NrmlSeller(UserID),
     FOREIGN KEY (EmployeID) REFERENCES Employee(EmpID)
 );
 
